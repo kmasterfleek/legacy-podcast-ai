@@ -1,0 +1,36 @@
+# Environments and OS noise
+.venv/
+__pycache__/
+*.egg-info/
+.DS_Store
+
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Legacy Podcast AI runtime data (series.json is committed; the rest is derived)
+series/*/cache/
+series/*/catalog.json
+series/*/manifest.json
+series/*/transcripts/
+transcripts/
+
+# Original prototype's scratch data
+scripts/data/
+
+# Ruflo / Claude Flow runtime data
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+.claude-flow/daemon.pid
+.claude-flow/daemon-state.json
+.swarm/
+ruvector.db
+
+# Local test series on a third-party show; not part of the product
+series/lex-fridman-podcast/
+.claude-flow/metrics/
+.claude-flow/policy/
+.claude-flow/swarm/
+.claude-flow/security/

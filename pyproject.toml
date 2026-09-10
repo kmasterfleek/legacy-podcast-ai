@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "legacy-podcast-ai"
+version = "0.1.0"
+description = "Turn any YouTube podcast, channel, playlist or media series into clean, timestamped markdown transcripts."
+requires-python = ">=3.9"
+dependencies = ["yt-dlp"]
+
+[project.optional-dependencies]
+whisper = ["faster-whisper"]
+
+[project.scripts]
+legacy = "legacyai.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

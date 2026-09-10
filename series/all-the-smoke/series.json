@@ -1,0 +1,28 @@
+{
+  "name": "All The Smoke",
+  "slug": "all-the-smoke",
+  "sources": [
+    "https://www.youtube.com/channel/UC2ozVs4pg2K3uFLw6-0ayCQ/videos",
+    "https://www.youtube.com/playlist?list=PL6fkKAMsPY-HOH4B2Gz6vcOavn-JwOqxx",
+    "https://www.youtube.com/playlist?list=PL6fkKAMsPY-HgNHlKjGE-Bg4CLT-Ecpj0",
+    "https://www.youtube.com/playlist?list=PL6fkKAMsPY-F3rf7I_7e06J10MOz0txPl",
+    "https://www.youtube.com/playlist?list=PL6fkKAMsPY-Gww9nRJH9yg80kgydil28V"
+  ],
+  "language": "en",
+  "min_minutes": 25.0,
+  "max_minutes": null,
+  "include": null,
+  "exclude": "unplugged|kg certified|ticket & the truth|open run|bully ball|headliners|truth lounge|what.s burnin|watch party",
+  "providers": [
+    "captions",
+    "whisper"
+  ],
+  "transcripts_dir": "../../transcripts",
+  "player_clients": [
+    "android",
+    "tv",
+    "web"
+  ],
+  "max_entries": 0,
+  "created": "2026-09-10"
+}
