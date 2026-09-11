@@ -28,8 +28,10 @@ scripts/data/
 .swarm/
 ruvector.db
 
-# Local test series on a third-party show; not part of the product
+# Local test series on third-party shows; not part of the product (mighty-mouse is public domain and kept as a demo)
 series/lex-fridman-podcast/
+series/pc20/
+series/podnews/
 .claude-flow/metrics/
 .claude-flow/policy/
 .claude-flow/swarm/

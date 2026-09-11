@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "legacy-podcast-ai"
-version = "0.1.0"
+version = "0.2.0"
 description = "Turn any YouTube podcast, channel, playlist or media series into clean, timestamped markdown transcripts."
 requires-python = ">=3.9"
 dependencies = ["yt-dlp"]

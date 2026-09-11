@@ -1,0 +1,32 @@
+{
+  "name": "Mighty Mouse (Terrytoons)",
+  "slug": "mighty-mouse",
+  "sources": [
+    "ia:title:(mighty mouse) AND mediatype:movies AND date:[1942-01-01 TO 1961-12-31]"
+  ],
+  "language": "en",
+  "min_minutes": 3.0,
+  "max_minutes": 15.0,
+  "include": null,
+  "exclude": "japanese|fanmade|trailer|dub",
+  "providers": [
+    "captions",
+    "sidecar",
+    "whisper"
+  ],
+  "whisper_model": "small",
+  "whisper_vad": false,
+  "min_wpm": 0.0,
+  "max_wpm": 250,
+  "transcripts_dir": null,
+  "player_clients": [
+    "android",
+    "tv",
+    "web"
+  ],
+  "max_entries": 12,
+  "request_sleep": 1.0,
+  "cookies_from_browser": null,
+  "cookies_file": null,
+  "created": "2026-09-10"
+}

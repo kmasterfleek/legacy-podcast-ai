@@ -59,7 +59,7 @@ def out_name(episode: dict, out_dir: Optional[Path] = None) -> str:
 def build_one(series: Series, episode: dict) -> dict:
     """Try providers in order; return a manifest record."""
     info: Optional[dict] = None
-    if episode.get("kind") != "local":
+    if episode.get("kind", "url") == "url":
         info = fetch_info(series, episode["url"], episode["id"])
         if info:  # refresh catalog-level fields that may have been missing
             for k in ("title", "upload_date", "duration"):
@@ -93,7 +93,8 @@ def build_one(series: Series, episode: dict) -> dict:
 
 
 def build(series: Series, limit: int = 0, workers: int = 3, retry_failed: bool = False,
-          since: str = "", only: Optional[List[str]] = None, log=print) -> Dict[str, dict]:
+          since: str = "", only: Optional[List[str]] = None, force: bool = False,
+          log=print) -> Dict[str, dict]:
     series.out_dir.mkdir(parents=True, exist_ok=True)
     catalog = load_json(series.catalog_path, {})
     manifest: Dict[str, dict] = load_json(series.manifest_path, {})
@@ -102,9 +103,9 @@ def build(series: Series, limit: int = 0, workers: int = 3, retry_failed: bool =
     todo = []
     for ep in in_scope(series, catalog):
         rec = manifest.get(ep["id"], {})
-        if rec.get("status") == "done":
+        if rec.get("status") == "done" and not force:
             continue
-        if rec.get("status") == "failed" and not retry_failed:
+        if rec.get("status") == "failed" and not (retry_failed or force):
             continue
         if since and (ep.get("upload_date") or "") < since.replace("-", ""):
             continue

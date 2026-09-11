@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .config import Series, load_json, save_json
+from .sources import LISTERS, kind_of
 
 CACHE_TTL = 4 * 3600  # signed caption URLs expire; refresh extractor JSON after this
 BLOCK_MARKERS = ("429", "Too Many Requests", "not a bot", "Sign in to confirm")
@@ -141,8 +142,16 @@ def discover(series: Series, workers: int = 6, max_entries: int = 0, log=print) 
     catalog: Dict[str, dict] = load_json(series.catalog_path, {})
     seen: Dict[str, dict] = {}
     for src in series.sources:
-        log(f"listing {src}")
+        kind = kind_of(src)
+        log(f"listing [{kind}] {src}")
         try:
+            if kind in LISTERS:  # archive.org / RSS: entries arrive with full metadata
+                eps = LISTERS[kind](src, max_entries or series.max_entries, log)
+                for ep in eps:
+                    catalog[ep["id"]] = {**ep, "source": src}
+                    seen.setdefault(ep["id"], {**ep, "source": src})
+                log(f"  {len(eps)} entries")
+                continue
             entries = list_source(series, src, max_entries)
         except Exception as exc:  # network / extractor failure on one source
             log(f"  !! could not list source: {exc}")
@@ -150,7 +159,8 @@ def discover(series: Series, workers: int = 6, max_entries: int = 0, log=print) 
         log(f"  {len(entries)} entries")
         for e in entries:
             seen.setdefault(e["id"], {**e, "source": src})
-    todo = [e for vid, e in seen.items() if vid not in catalog or not catalog[vid].get("duration")]
+    todo = [e for vid, e in seen.items()
+            if e.get("kind", "url") == "url" and (vid not in catalog or not catalog[vid].get("duration"))]
     log(f"{len(seen)} unique entries across sources, {len(todo)} need metadata")
 
     def probe(e):

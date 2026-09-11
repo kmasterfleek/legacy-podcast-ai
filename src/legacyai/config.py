@@ -36,7 +36,12 @@ class Series:
     max_minutes: Optional[float] = None
     include: Optional[str] = None      # regex on title; keep only matches
     exclude: Optional[str] = None      # regex on title; drop matches
-    providers: List[str] = field(default_factory=lambda: ["captions", "whisper"])
+    providers: List[str] = field(default_factory=lambda: ["captions", "sidecar", "whisper"])
+    whisper_model: str = "small"       # tiny/base/small/medium/large-v3; bigger = better on old audio
+    whisper_vad: bool = False          # voice-activity filter; leave off for music-backed or archival audio
+    min_wpm: float = 60                # validation floor; lower it for sparse-dialogue material
+    max_wpm: float = 250
+    max_media_mb: int = 2000           # refuse direct media downloads larger than this
     transcripts_dir: Optional[str] = None  # relative to series dir; default "transcripts"
     player_clients: List[str] = field(default_factory=lambda: ["android", "tv", "web"])
     max_entries: int = 0               # per source; 0 = everything

@@ -5,7 +5,9 @@
     legacy build all-the-smoke --limit 20 --workers 3
     legacy validate all-the-smoke
     legacy run all-the-smoke            # discover + build + validate + index
-    legacy import my-tv-show ~/Videos/show/*.mp4
+    legacy init "Mighty Mouse" --url "ia:title:(mighty mouse) AND date:[1942 TO 1961]"   # Internet Archive
+    legacy init "My Podcast" --url https://example.com/feed.xml                          # RSS feed
+    legacy import my-tv-show ~/Videos/show/*.mp4                                         # local files
     legacy status
 """
 import argparse
@@ -21,7 +23,7 @@ def cmd_init(a):
     s = Series(name=a.name, slug=slug, sources=list(a.url or []), language=a.language,
                min_minutes=a.min_minutes, max_minutes=a.max_minutes,
                include=a.include, exclude=a.exclude,
-               transcripts_dir=a.transcripts_dir, max_entries=a.max_entries,
+               transcripts_dir=a.transcripts_dir, max_entries=a.max_entries, whisper_model=a.whisper_model,
                providers=[p.strip() for p in a.providers.split(",") if p.strip()])
     if s.config_path.exists() and not a.force:
         sys.exit(f"series '{slug}' already exists at {s.config_path} (use --force to overwrite)")
@@ -42,7 +44,8 @@ def cmd_add_source(a):
 def cmd_config(a):
     s = Series.load(a.series)
     for key in ("language", "min_minutes", "max_minutes", "include", "exclude", "max_entries", "providers",
-                "request_sleep", "cookies_from_browser", "cookies_file"):
+                "request_sleep", "cookies_from_browser", "cookies_file", "whisper_model",
+                "whisper_vad", "min_wpm", "max_wpm", "max_media_mb"):
         val = getattr(a, key)
         if val is None:
             continue
@@ -52,7 +55,8 @@ def cmd_config(a):
     s.save()
     print(json.dumps({k: getattr(s, k) for k in ("language", "min_minutes", "max_minutes", "include",
                                                   "exclude", "max_entries", "providers", "request_sleep",
-                                                  "cookies_from_browser", "cookies_file")}, indent=2))
+                                                  "cookies_from_browser", "cookies_file", "whisper_model",
+                                                  "whisper_vad", "min_wpm", "max_wpm", "max_media_mb")}, indent=2))
 
 
 def cmd_discover(a):
@@ -66,7 +70,7 @@ def cmd_build(a):
     from .build import build, write_index
     s = Series.load(a.series)
     build(s, limit=a.limit, workers=a.workers, retry_failed=a.retry_failed,
-          since=a.since or "", only=a.id or None)
+          since=a.since or "", only=a.id or None, force=a.force)
     write_index(s)
 
 
@@ -122,7 +126,7 @@ def cmd_doctor(_a):
         checks.append(("yt-dlp", yt_dlp.version.__version__))
     except ImportError:
         checks.append(("yt-dlp", "MISSING (pip install yt-dlp)"))
-    checks.append(("ffmpeg", shutil.which("ffmpeg") or "missing (needed for whisper/audio)"))
+    checks.append(("ffmpeg", shutil.which("ffmpeg") or "missing (optional; faster-whisper decodes without it)"))
     checks.append(("ffprobe", shutil.which("ffprobe") or "missing (local file durations)"))
     checks.append(("whisper backend", whisper_available() or "none (pip install faster-whisper)"))
     checks.append(("python", sys.version.split()[0]))
@@ -145,7 +149,8 @@ def make_parser() -> argparse.ArgumentParser:
     i.add_argument("--max-minutes", type=float)
     i.add_argument("--include", help="regex; keep only titles that match")
     i.add_argument("--exclude", help="regex; drop titles that match")
-    i.add_argument("--providers", default="captions,whisper")
+    i.add_argument("--providers", default="captions,sidecar,whisper")
+    i.add_argument("--whisper-model", default="small")
     i.add_argument("--transcripts-dir", help="output dir relative to the series folder")
     i.add_argument("--max-entries", type=int, default=0, help="newest N entries per source (0 = all)")
     i.add_argument("--force", action="store_true")
@@ -163,6 +168,10 @@ def make_parser() -> argparse.ArgumentParser:
     c.add_argument("--request-sleep", type=float, help="seconds between requests (default 1.0)")
     c.add_argument("--cookies-from-browser", help="chrome|firefox|safari|edge|brave")
     c.add_argument("--cookies-file", help="Netscape cookies.txt path")
+    c.add_argument("--whisper-model", help="tiny|base|small|medium|large-v3 (default small)")
+    c.add_argument("--whisper-vad", type=lambda v: v.lower() in ("1", "true", "yes", "on"), help="true|false")
+    c.add_argument("--min-wpm", type=float); c.add_argument("--max-wpm", type=float)
+    c.add_argument("--max-media-mb", type=int)
     c.set_defaults(fn=cmd_config)
 
     d = sub.add_parser("discover", help="enumerate sources and probe episode metadata")
@@ -177,6 +186,7 @@ def make_parser() -> argparse.ArgumentParser:
     b.add_argument("--since", help="YYYY-MM-DD; skip older episodes")
     b.add_argument("--id", action="append", help="build only this episode id (repeatable)")
     b.add_argument("--retry-failed", action="store_true")
+    b.add_argument("--force", action="store_true", help="rebuild even if already done (pair with --id)")
     b.set_defaults(fn=cmd_build)
 
     v = sub.add_parser("validate", help="sanity-check built transcripts")

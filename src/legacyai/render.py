@@ -95,6 +95,7 @@ def render_markdown(episode: dict, series_name: str, paras, total_words: int,
     dur = sec_to_stamp(d)
     ud = str(episode.get("upload_date") or "").replace("-", "")
     date = f"{ud[:4]}-{ud[4:6]}-{ud[6:8]}" if len(ud) == 8 else (ud or "unknown")
+    year = ud[:4] if len(ud) >= 4 else ""
     url = episode.get("url") or ""
     title = episode.get("title") or episode.get("id")
     lines = [
@@ -104,6 +105,7 @@ def render_markdown(episode: dict, series_name: str, paras, total_words: int,
         f"video_id: {_yaml_str(episode.get('id'))}",
         f"url: {_yaml_str(url)}",
         f'upload_date: "{date}"',
+        f'year: "{year}"',
         f'duration: "{dur}"',
         f"word_count: {total_words}",
         f"transcript_source: {_yaml_str(source_label)}",
@@ -115,6 +117,8 @@ def render_markdown(episode: dict, series_name: str, paras, total_words: int,
     ]
     if url:
         lines.append(f"**Source:** <{url}>")
+    if episode.get("license"):
+        lines.append(f"**License:** <{episode['license']}>")
     lines += [
         "",
         f"> Transcript source: {source_label}. Speaker labels are not available in the",

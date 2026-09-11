@@ -6,7 +6,6 @@ from typing import List
 from .config import Series, load_json
 from .render import read_frontmatter
 
-MIN_WPM, MAX_WPM = 60, 250
 HEADING_RE = re.compile(r"^##### ", re.M)
 
 
@@ -20,6 +19,7 @@ def _dur_seconds(stamp: str) -> int:
 
 def validate(series: Series, log=print) -> List[str]:
     flags: List[str] = []
+    min_wpm, max_wpm = series.min_wpm, series.max_wpm
     manifest = load_json(series.manifest_path, {})
     ids = Counter()
     checked = 0
@@ -38,8 +38,8 @@ def validate(series: Series, log=print) -> List[str]:
         words = int(fm["word_count"] or 0)
         if secs >= 60:
             wpm = words / (secs / 60)
-            if wpm < MIN_WPM or wpm > MAX_WPM:
-                flags.append(f"{rel}: {wpm:.0f} words/min is outside {MIN_WPM}-{MAX_WPM}")
+            if wpm < min_wpm or wpm > max_wpm:
+                flags.append(f"{rel}: {wpm:.0f} words/min is outside {min_wpm:g}-{max_wpm:g}")
         body = path.read_text(encoding="utf-8", errors="ignore")
         n_head = len(HEADING_RE.findall(body))
         if n_head < 3 and secs > 300:
