@@ -105,6 +105,12 @@ with `LEGACY_EMBEDDED_WORKER=1`. The web command reads `PORT`; the local Docker
 health check assumes 8000, so override the host's health check to `/health` when
 using a different port. Do not scale this SQLite version across machines.
 
+On hosts without a shell, set `LEGACY_BOOTSTRAP_EMAIL` and `LEGACY_ADMIN_PASSWORD`
+(12+ characters, stored as a secret). On start, `serve` creates that account if it
+does not exist and indexes the bundled archive into its workspace. Optional:
+`LEGACY_BOOTSTRAP_NAME`, `LEGACY_BOOTSTRAP_WORKSPACE` (default `All The Smoke`),
+`LEGACY_BOOTSTRAP_ARCHIVE` (default `transcripts`).
+
 The image includes the repository's transcript archive. For separate customer
 deployments, build with only their authorized corpus or remove the COPY of
 `transcripts` and import through the browser. No index is exposed without sign-in.

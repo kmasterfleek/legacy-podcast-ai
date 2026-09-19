@@ -9,6 +9,26 @@ from .auth import provision
 from .db import connect, initialize
 
 
+def bootstrap():
+    """Create the first account from host variables and index the bundled archive.
+
+    For container hosts without a shell. Runs on every start; an existing account
+    is left untouched and unchanged transcripts are skipped.
+    """
+    email = os.environ.get("LEGACY_BOOTSTRAP_EMAIL","").strip().lower()
+    password = os.environ.get("LEGACY_ADMIN_PASSWORD","")
+    if not email or not password:
+        return
+    with connect() as con:
+        existing = con.execute("SELECT workspace_id FROM users WHERE email=?",(email,)).fetchone()
+    workspace_id = existing[0] if existing else provision(
+        email,password,os.environ.get("LEGACY_BOOTSTRAP_NAME","Studio admin"),
+        os.environ.get("LEGACY_BOOTSTRAP_WORKSPACE","All The Smoke"))
+    archive = Path(os.environ.get("LEGACY_BOOTSTRAP_ARCHIVE","transcripts"))
+    if archive.is_dir():
+        index_archive(workspace_id,archive,log=lambda *_: None)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="legacy-studio")
     sub = parser.add_subparsers(dest="command",required=True)
@@ -57,6 +77,8 @@ def main():
             workspace_id = existing[0] if existing else provision(
                 "demo@legacy.local","legacy-local-demo","Studio demo","All The Smoke")
             index_archive(workspace_id,args.archive)
+        else:
+            bootstrap()
         import uvicorn
         uvicorn.run("legacyai.studio.app:create_app",factory=True,host=args.host,port=args.port,
                     proxy_headers=False)
