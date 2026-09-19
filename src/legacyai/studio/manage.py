@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from legacyai.search.index import index_archive
-from .auth import provision
+from .auth import check_password, provision, set_password
 from .db import connect, initialize
 
 
@@ -13,14 +13,16 @@ def bootstrap():
     """Create the first account from host variables and index the bundled archive.
 
     For container hosts without a shell. Runs on every start; an existing account
-    is left untouched and unchanged transcripts are skipped.
+    keeps its data, takes the configured password, and unchanged transcripts are skipped.
     """
     email = os.environ.get("LEGACY_BOOTSTRAP_EMAIL","").strip().lower()
     password = os.environ.get("LEGACY_ADMIN_PASSWORD","")
     if not email or not password:
         return
     with connect() as con:
-        existing = con.execute("SELECT workspace_id FROM users WHERE email=?",(email,)).fetchone()
+        existing = con.execute("SELECT workspace_id,password_hash FROM users WHERE email=?",(email,)).fetchone()
+    if existing and not check_password(password,existing[1]):
+        set_password(email,password)
     workspace_id = existing[0] if existing else provision(
         email,password,os.environ.get("LEGACY_BOOTSTRAP_NAME","Studio admin"),
         os.environ.get("LEGACY_BOOTSTRAP_WORKSPACE","All The Smoke"))
@@ -51,7 +53,7 @@ def main():
     args = parser.parse_args()
     initialize()
     if args.command=="provision":
-        password = os.environ.get("LEGACY_ADMIN_PASSWORD") or getpass.getpass("Password (12+ characters): ")
+        password = os.environ.get("LEGACY_ADMIN_PASSWORD") or getpass.getpass("Password (8+ characters): ")
         workspace_id = provision(args.email,password,args.name,args.workspace)
         print(f"Created workspace {workspace_id}; account {args.email}")
     elif args.command=="accounts":

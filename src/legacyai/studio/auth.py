@@ -27,9 +27,27 @@ def check_password(password, encoded):
         return False
 
 
+MIN_PASSWORD = 8
+
+
+def check_length(password):
+    if len(password) < MIN_PASSWORD:
+        raise ValueError(f"Use a password with at least {MIN_PASSWORD} characters")
+
+
+def set_password(email, password):
+    """Replace an account's password and sign out its existing sessions."""
+    check_length(password)
+    with connect() as con:
+        row = con.execute("SELECT id FROM users WHERE email=?", (email.strip().lower(),)).fetchone()
+        if not row:
+            raise ValueError("This account does not exist")
+        con.execute("UPDATE users SET password_hash=? WHERE id=?", (hash_password(password), row[0]))
+        con.execute("DELETE FROM sessions WHERE user_id=?", (row[0],))
+
+
 def provision(email, password, name, workspace_name):
-    if len(password) < 12:
-        raise ValueError("Use a password with at least 12 characters")
+    check_length(password)
     email = email.strip().lower()
     if "@" not in email:
         raise ValueError("A valid email is required")

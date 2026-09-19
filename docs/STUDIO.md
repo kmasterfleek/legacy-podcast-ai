@@ -106,9 +106,9 @@ health check assumes 8000, so override the host's health check to `/health` when
 using a different port. Do not scale this SQLite version across machines.
 
 On hosts without a shell, set `LEGACY_BOOTSTRAP_EMAIL` and `LEGACY_ADMIN_PASSWORD`
-(12+ characters, stored as a secret). On start, `serve` creates that account if it
-does not exist and indexes the bundled archive into its workspace. Optional:
-`LEGACY_BOOTSTRAP_NAME`, `LEGACY_BOOTSTRAP_WORKSPACE` (default `All The Smoke`),
+(8+ characters, stored as a secret). On start, `serve` creates that account, or
+updates its password if the variable changed, and indexes the bundled archive
+into its workspace. Optional: `LEGACY_BOOTSTRAP_NAME`, `LEGACY_BOOTSTRAP_WORKSPACE` (default `All The Smoke`),
 `LEGACY_BOOTSTRAP_ARCHIVE` (default `transcripts`).
 
 The image includes the repository's transcript archive. For separate customer
