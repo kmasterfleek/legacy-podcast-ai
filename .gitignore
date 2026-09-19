@@ -12,6 +12,10 @@ __pycache__/
 # Legacy Podcast AI runtime data (series.json is committed; the rest is derived)
 series/*/*
 !series/*/series.json
+.legacy-studio/
+.pytest_cache/
+build/
+dist/
 
 # Original prototype's scratch data
 scripts/data/

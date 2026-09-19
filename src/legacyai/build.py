@@ -161,7 +161,8 @@ def write_index(series: Series, log=print) -> Path:
     for vid, rec in manifest.items():
         if rec.get("status") != "done":
             continue
-        ep = catalog.get(vid) or read_frontmatter(series.out_dir / rec["file"])
+        fm = read_frontmatter(series.out_dir / rec["file"])
+        ep = {**fm, **{k: v for k, v in (catalog.get(vid) or {}).items() if v not in (None, "")}}
         date = str(ep.get("upload_date") or "")
         date = f"{date[:4]}-{date[4:6]}-{date[6:8]}" if re.fullmatch(r"\d{8}", date) else date
         rows.append((date, ep.get("title") or vid, rec["file"], rec.get("word_count", 0)))

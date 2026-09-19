@@ -1,0 +1,35 @@
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      LEGACY_ENV: production
+      LEGACY_STUDIO_DATA: /data
+      LEGACY_WEB_DIR: /app/apps/web
+      LEGACY_PUBLIC_URL: ${LEGACY_PUBLIC_URL:-}
+      LEGACY_SIGNING_KEY: ${LEGACY_SIGNING_KEY:-}
+      LEGACY_PUBLISH_WEBHOOK: ${LEGACY_PUBLISH_WEBHOOK:-}
+      LEGACY_PUBLISH_WORKSPACE: ${LEGACY_PUBLISH_WORKSPACE:-}
+      LEGACY_UPLOAD_MB: ${LEGACY_UPLOAD_MB:-1000}
+    volumes:
+      - studio-data:/data
+    restart: unless-stopped
+  worker:
+    build: .
+    command: ["legacy-studio", "worker"]
+    environment:
+      LEGACY_ENV: production
+      LEGACY_STUDIO_DATA: /data
+      LEGACY_PUBLIC_URL: ${LEGACY_PUBLIC_URL:-}
+      LEGACY_SIGNING_KEY: ${LEGACY_SIGNING_KEY:-}
+      LEGACY_PUBLISH_WEBHOOK: ${LEGACY_PUBLISH_WEBHOOK:-}
+      LEGACY_PUBLISH_WORKSPACE: ${LEGACY_PUBLISH_WORKSPACE:-}
+      LEGACY_UPLOAD_MB: ${LEGACY_UPLOAD_MB:-1000}
+    volumes:
+      - studio-data:/data
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+volumes:
+  studio-data:

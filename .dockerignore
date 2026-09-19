@@ -1,0 +1,15 @@
+.git
+.venv
+.legacy-studio
+__pycache__
+**/__pycache__
+*.egg-info
+.pytest_cache
+.env
+.env.*
+series/*/cache
+tests
+.claude
+.claude-flow
+.agents
+.sites-runtime

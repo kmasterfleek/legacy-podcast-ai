@@ -1,5 +1,30 @@
 # Legacy Podcast AI
 
+## Legacy Studio: the browser workspace
+
+The same repository now includes **Legacy Studio**: search the full archive,
+match a headline to real passages, save opportunities, review source context,
+prepare and render clips, and export a video with its post caption and provenance.
+It includes workspace sign-in, durable jobs, RSS headline feeds, and an optional
+publisher webhook. The archive harness below still works independently.
+
+```bash
+make setup
+make dev
+```
+
+Open **http://localhost:8000** and choose the local All The Smoke demo. All 471
+committed transcripts are indexed. FFmpeg enables video rendering. Customer
+deployments use separately provisioned accounts and HTTPS, not demo sign-in.
+
+Read the [product plan](docs/PRODUCT_PLAN.md) and [Studio setup, deployment, and
+operating guide](docs/STUDIO.md). Search currently uses keywords and explicit
+aliases; clip boundaries are approximate until checked against source video.
+Native social sign-in, billing, semantic reranking, and automatic subtitles are
+subsequent release work.
+
+---
+
 **From Mighty Mouse to this morning's episode: every era of a catalog, transcribed.**
 
 Legacy Podcast AI turns a creator's complete archive into clean, timestamped,
