@@ -38,10 +38,9 @@ new storage volume and separately provisioned accounts for a pilot.
    boundaries. Speaker 1 is not assumed to be a particular person.
 3. **Save to clip desk**: title and caption are editable. The original passage and
    transcript hash are preserved as evidence across subsequent archive indexing.
-4. **Prepare the video**: upload the original episode, or request a linked YouTube
-   video. Downloads depend on source availability; owner-supplied cookies can be
-   configured on the worker. RSS-only episodes require a corresponding video upload.
-   Select a source, save to preview it, adjust times, and confirm alignment.
+4. **Prepare the video**: upload the original episode file. Clips are cut from the
+   owner's own source video, not from a YouTube download; the browser no longer
+   offers a YouTube fetch. Select a source, save to preview it, adjust times, and confirm alignment.
 5. **Render**: choose portrait, square, or landscape. FFmpeg creates an MP4 from
    the selected range with a center crop. Face tracking and burned-in subtitles
    are not part of this release. Edited clips require a new render and approval.

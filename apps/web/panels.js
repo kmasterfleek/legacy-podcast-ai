@@ -79,10 +79,6 @@ export async function openClip(id){
   $('#approve-clip').onclick=async e=>{const done=busy(e.currentTarget,'Approving…');try{await api(`/clips/${id}/approve`,{method:'POST'});toast('This cut is approved');await openClip(id);}catch(error){toast(error.message,true);}finally{done();}};
   $('#publish-clip')?.addEventListener('click',async e=>{const done=busy(e.currentTarget,'Sending…');try{const job=await api(`/clips/${id}/publish`,{method:'POST'});toast('Publisher delivery queued');await openClip(id);pollJob(job.job_id,id);}catch(error){toast(error.message,true);}finally{done();}});
   $('#upload-media').onclick=()=>$('#media-file').click();
-  if(clip.youtube_id){
-   $('#upload-media').insertAdjacentHTML('afterend','<button class="btn secondary" type="button" id="fetch-video">'+icon('download')+' Fetch from YouTube</button>');
-   $('#fetch-video').onclick=async e=>{const done=busy(e.currentTarget,'Queuing download…');try{await save();const job=await api(`/episodes/${encodeURIComponent(clip.episode_id)}/fetch-video`,{method:'POST'});toast('Source video download queued');pollJob(job.job_id,id);}catch(error){toast(error.message,true);}finally{done();}};
-  }
   $('#media-file').onchange=async e=>{if(!e.target.files.length)return;const button=$('#upload-media'),done=busy(button,'Uploading video…');const data=new FormData();data.append('file',e.target.files[0]);try{const asset=await api(`/episodes/${encodeURIComponent(clip.episode_id)}/media`,{method:'POST',body:data});const option=document.createElement('option');option.value=asset.id;option.textContent=`${asset.name} · ${time(asset.duration)}`;form.elements.asset_id.append(option);form.elements.asset_id.value=asset.id;form.elements.alignment_confirmed.checked=false;dirty=true;$('#clip-message').textContent='Video uploaded. Save to preview it, then confirm the timing.';toast('Source video uploaded');}catch(error){toast(error.message,true);}finally{done();}};
   $('#export-clip').onclick=e=>{if(dirty){e.preventDefault();toast('Save your changes before exporting',true);}};
   if(clip.active_job)pollJob(clip.active_job,id);
