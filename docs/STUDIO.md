@@ -28,6 +28,10 @@ new storage volume and separately provisioned accounts for a pilot.
    links or podcast transcripts. Results are BM25-ranked keyword matches with
    explicit name/topic aliases, advertisement filtering, and overlapping-result
    suppression. There are no fabricated confidence scores or semantic embeddings.
+   When `ANTHROPIC_API_KEY` is set, Claude Haiku (`claude-haiku-4-5`, pinned in
+   `search/rerank.py`) turns longer requests into search words, then reads the top 40
+   keyword passages and keeps only those genuinely about the request, each with a
+   one-sentence reason. Any API failure falls back to the keyword results.
 2. **Read context**: inspect the exact source passage and adjacent text; preview
    linked YouTube media or open the podcast source. YouTube previews load the selected
    start/end range inline, with a **Preview selection** replay button. Editing clip

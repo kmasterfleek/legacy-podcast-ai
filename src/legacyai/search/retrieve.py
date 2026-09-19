@@ -1,6 +1,7 @@
-"""BM25 plus explicit aliases; scores are ranking values, not confidence claims."""
+"""BM25 plus explicit aliases, optionally read by Claude; scores are ranking values, not confidence claims."""
 import re
 
+from . import rerank
 from .index import youtube_id
 
 STOP = set("a an and are as at be because been being but by can could did do does for from get gets "
@@ -46,6 +47,23 @@ def search(con, workspace_id, query, limit=12, source_kind="", include_ads=False
     terms, expanded = terms_for(query)
     if not terms:
         return {"results": [], "terms": [], "expanded_terms": [], "engine": "Keyword + aliases"}
+    if not rerank.enabled():
+        return keyword_search(con, workspace_id, terms, expanded, limit, source_kind, include_ads)
+    show = con.execute("SELECT show_name FROM episodes WHERE workspace_id=? LIMIT 1", (workspace_id,)).fetchone()
+    show = show[0] if show and show[0] else "this podcast"
+    # Short name or topic lookups are already specific; planning helps headlines and descriptions.
+    planned = rerank.plan(query, show) if len(terms) > 2 else None
+    if planned and planned["keywords"]:
+        expanded = list(dict.fromkeys(expanded + [t for t in planned["related"] if t not in planned["keywords"]]))[:18]
+        terms = planned["keywords"]
+    found = keyword_search(con, workspace_id, terms, expanded, rerank.POOL, source_kind, include_ads)
+    picked = rerank.pick(query, planned["angle"] if planned else "", show, found["results"], limit)
+    if picked:
+        return {**found, "results": picked, "engine": "Keyword search, read by Claude"}
+    return {**found, "results": found["results"][:limit]}
+
+
+def keyword_search(con, workspace_id, terms, expanded, limit, source_kind, include_ads):
     expression = " OR ".join('"'+t.replace('"', '""')+'"' for t in terms+expanded)
     params = [expression, workspace_id]
     where = ""

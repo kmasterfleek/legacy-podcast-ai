@@ -45,6 +45,8 @@ def studio(tmp_path,monkeypatch):
     monkeypatch.delenv("LEGACY_DEMO",raising=False)
     monkeypatch.delenv("LEGACY_EMBEDDED_WORKER",raising=False)
     monkeypatch.delenv("LEGACY_PUBLISH_WEBHOOK",raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY",raising=False)
+    monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN",raising=False)
     initialize()
     first=provision("a@example.com","test-password-123","Alice","First studio")
     second=provision("b@example.com","test-password-456","Bob","Second studio")
