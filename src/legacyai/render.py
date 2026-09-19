@@ -7,9 +7,10 @@ import html
 import re
 from typing import Iterable, List, Tuple
 
-Cue = Tuple[float, str]  # (start_seconds, text)
+Cue = Tuple  # (start_seconds, text) or (start_seconds, text, speaker)
 
 TAG_RE = re.compile(r"<[^>]+>")
+VOICE_RE = re.compile(r"<v(?:\.[^ >]*)?\s+([^>]+)>")  # WebVTT voice span: <v Speaker 1>
 CUE_RE = re.compile(r"(\d{1,2}:)?(\d{2}):(\d{2})[.,](\d{3})\s+-->\s+(\d{1,2}:)?(\d{2}):(\d{2})[.,](\d{3})")
 BRACKET_RE = re.compile(r"\[(?:music|applause|laughter|singing)[^\]]*\]", re.I)
 
@@ -44,10 +45,15 @@ def parse_vtt(text: str) -> Iterable[Cue]:
         # YouTube ASR: the line carrying <NN:NN:NN.NNN><c>word</c> tags is the new speech.
         tagged = [ln for ln in payload if "<c>" in ln or re.search(r"<\d{2}:\d{2}", ln)]
         chosen = tagged[-1] if tagged else " ".join(payload)
+        voice = VOICE_RE.search(chosen)
         clean = BRACKET_RE.sub("", html.unescape(TAG_RE.sub("", chosen)))
         clean = re.sub(r"\s+", " ", clean).strip()
         if clean:
-            yield _ts(*timing.groups()[:4]), clean
+            start = _ts(*timing.groups()[:4])
+            if voice:
+                yield start, clean, voice.group(1).strip()
+            else:
+                yield start, clean
 
 
 def dedupe_append(emitted: List[str], words: List[str]) -> List[str]:
@@ -59,13 +65,34 @@ def dedupe_append(emitted: List[str], words: List[str]) -> List[str]:
     return words
 
 
-def build_paragraphs(cues: Iterable[Cue]) -> Tuple[List[Tuple[float, str]], int]:
+def build_paragraphs(cues: Iterable[Cue]) -> Tuple[List[tuple], int]:
+    """Group cues into paragraphs.
+
+    Plain cues (start, text) come from rolling ASR and are de-duplicated
+    against the running text. Speaker cues (start, text, speaker) come from
+    published transcripts: they never overlap, a new paragraph starts on every
+    speaker change, and paragraphs are returned as (start, text, speaker).
+    """
     words: List[str] = []
-    paras: List[Tuple[float, str]] = []
+    paras: List[tuple] = []
     cur: List[str] = []
     cur_start = None
-    for start, text in cues:
-        new = dedupe_append(words, text.split())
+    cur_speaker = None
+
+    def flush():
+        if cur:
+            para = (cur_start or 0, " ".join(cur))
+            paras.append(para + (cur_speaker,) if cur_speaker else para)
+
+    for cue in cues:
+        start, text = cue[0], cue[1]
+        speaker = cue[2] if len(cue) > 2 else None
+        if speaker and speaker != cur_speaker and cur:
+            flush()
+            cur, cur_start = [], None
+        if speaker:
+            cur_speaker = speaker
+        new = text.split() if speaker else dedupe_append(words, text.split())
         if not new:
             continue
         words.extend(new)
@@ -77,10 +104,9 @@ def build_paragraphs(cues: Iterable[Cue]) -> Tuple[List[Tuple[float, str]], int]
         ends_sentence = cur[-1][-1:] in ".?!"
         if (long_enough and ends_sentence) or start - cur_start >= PARA_SECONDS * 2 \
                 or (timed_out and ends_sentence):
-            paras.append((cur_start, " ".join(cur)))
+            flush()
             cur, cur_start = [], None
-    if cur:
-        paras.append((cur_start or 0, " ".join(cur)))
+    flush()
     return paras, len(words)
 
 
@@ -109,6 +135,7 @@ def render_markdown(episode: dict, series_name: str, paras, total_words: int,
         f'duration: "{dur}"',
         f"word_count: {total_words}",
         f"transcript_source: {_yaml_str(source_label)}",
+        f"speaker_labels: {'true' if any(len(p) > 2 and p[2] for p in paras) else 'false'}",
         "---",
         "",
         f"# {title}",
@@ -119,23 +146,28 @@ def render_markdown(episode: dict, series_name: str, paras, total_words: int,
         lines.append(f"**Source:** <{url}>")
     if episode.get("license"):
         lines.append(f"**License:** <{episode['license']}>")
+    has_speakers = any(len(p) > 2 and p[2] for p in paras)
+    speaker_note = ("Speaker labels come from the source and may be generic (Speaker 1, Speaker 2)."
+                    if has_speakers else "Speaker labels are not available in the source.")
     lines += [
         "",
-        f"> Transcript source: {source_label}. Speaker labels are not available in the",
-        "> source, so wording, names and attribution may be imperfect. Timestamps mark",
-        "> paragraph starts" + (" and link back to the source." if url else "."),
+        f"> Transcript source: {source_label}. {speaker_note} Wording, names and",
+        "> attribution may be imperfect. Timestamps mark paragraph starts"
+        + (" and link back to the source." if url else "."),
         "",
         "---",
         "",
     ]
-    for start, text in paras:
+    for para in paras:
+        start, text = para[0], para[1]
+        speaker = para[2] if len(para) > 2 else None
         stamp = sec_to_stamp(start)
         if url and "youtube.com/watch" in url:
             lines.append(f"##### [`{stamp}`]({url}&t={int(start)}s)")
         else:
             lines.append(f"##### `{stamp}`")
         lines.append("")
-        lines.append(text)
+        lines.append(f"**{speaker}:** {text}" if speaker else text)
         lines.append("")
     return "\n".join(lines)
 

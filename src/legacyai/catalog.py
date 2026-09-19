@@ -137,11 +137,14 @@ def episode_from_info(info: dict, source: str) -> dict:
     }
 
 
-def discover(series: Series, workers: int = 6, max_entries: int = 0, log=print) -> Dict[str, dict]:
-    """Enumerate all sources, probe new episodes, merge into catalog.json."""
+def discover(series: Series, workers: int = 6, max_entries: int = 0, only_source: str = "",
+             log=print) -> Dict[str, dict]:
+    """Enumerate sources (all, or those containing `only_source`), probe new episodes, merge into catalog.json."""
     catalog: Dict[str, dict] = load_json(series.catalog_path, {})
     seen: Dict[str, dict] = {}
     for src in series.sources:
+        if only_source and only_source not in src:
+            continue
         kind = kind_of(src)
         log(f"listing [{kind}] {src}")
         try:

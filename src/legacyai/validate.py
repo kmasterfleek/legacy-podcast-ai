@@ -65,14 +65,15 @@ def status(series: Series) -> dict:
     done = [v for v in manifest.values() if v.get("status") == "done"]
     failed = {k: v for k, v in manifest.items() if v.get("status") == "failed"}
     reasons = Counter(v.get("reason", "").split(";")[0].strip() for v in failed.values())
-    pending = [e for e in scoped if manifest.get(e["id"], {}).get("status") not in ("done", "failed")]
+    pending = [e for e in scoped if manifest.get(e["id"], {}).get("status") not in ("done", "failed", "duplicate")]
+    duplicates = sum(1 for v in manifest.values() if v.get("status") == "duplicate")
     unprobed = sum(1 for e in catalog.values() if e.get("probe_failed"))
     dates = sorted(e.get("upload_date") or "" for e in scoped if e.get("upload_date"))
     return {
         "series": series.name, "sources": len(series.sources),
         "catalog": len(catalog), "in_scope": len(scoped), "unprobed": unprobed,
         "done": len(done), "failed": len(failed),
-        "pending": len(pending),
+        "pending": len(pending), "duplicates": duplicates,
         "words": sum(int(v.get("word_count") or 0) for v in done),
         "date_range": (dates[0], dates[-1]) if dates else ("", ""),
         "failure_reasons": dict(reasons.most_common()),

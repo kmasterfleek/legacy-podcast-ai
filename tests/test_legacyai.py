@@ -207,6 +207,35 @@ class SourceTests(unittest.TestCase):
         self.assertIn("##### `00:00:00`", md)  # non-YouTube: no deep link
 
 
+class SpeakerAndDedupeTests(unittest.TestCase):
+    def test_voice_tags_become_speaker_paragraphs(self):
+        vtt = ("WEBVTT - Show\n\n0:00:00.070 --> 0:00:03.250\n<v Speaker 1>Welcome to the show.\n\n"
+               "0:00:03.470 --> 0:00:07.220\n<v Speaker 1>Great to have you.\n\n"
+               "0:00:07.480 --> 0:00:07.680\n<v Speaker 2>Yep.\n\n0:00:08.000 --> 0:00:09.000\n<v Speaker 2>Yep.\n")
+        cues = list(render.parse_vtt(vtt))
+        self.assertEqual(cues[0], (0.07, "Welcome to the show.", "Speaker 1"))
+        paras, n = render.build_paragraphs(cues)
+        self.assertEqual([p[2] for p in paras], ["Speaker 1", "Speaker 2"])
+        self.assertEqual(paras[1][1], "Yep. Yep.")  # published text is not de-duplicated
+        self.assertEqual(n, 10)
+        md = render.render_markdown({"id": "x", "title": "t", "url": "", "upload_date": "20260101",
+                                     "duration": 9}, "S", paras, n, "published transcript")
+        self.assertIn("**Speaker 2:** Yep. Yep.", md)
+        self.assertIn("speaker_labels: true", md)
+
+    def test_match_score(self):
+        from legacyai.dedupe import match_score
+        yt = "Kevin Garnett: The NBA's Greatest Storyteller"
+        self.assertTrue(match_score("Kevin Garnett | Greatest Storyteller", "20260822", yt, "2026-08-22"))
+        self.assertFalse(match_score("Kevin Garnett | Greatest Storyteller", "20260901", yt, "2026-08-22"))  # too far apart
+        self.assertTrue(match_score("T.I. | Ep 170 | ALL THE SMOKE Full Episode", "20230216",
+                                    "T.I. | Ep 170 | ALL THE SMOKE Full Episode | SHOWTIME", "2023-02-16"))
+        self.assertFalse(match_score("Wiz Khalifa | Ep 90", "20210624", "Leonard Ellerbe | Ep 91", "2021-06-24"))
+        self.assertTrue(match_score("FIRST GUEST J.R. SMITH: WHY DOESN'T HE HAVE A TEAM?", "20191024",
+                                    "Why is J.R. Smith Still a Free Agent?", "2019-10-24"))
+        self.assertFalse(match_score("Kobe stories with Shaq", "20260101", "Kobe's last game", "2026-01-02"))
+
+
 class ProviderTests(unittest.TestCase):
     def test_caption_priority(self):
         info = {

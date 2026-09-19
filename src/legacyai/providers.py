@@ -87,7 +87,8 @@ def sidecar(series: Series, episode: dict, info: Optional[dict]) -> Tuple[List[C
         raise ProviderError("no sidecar transcript")
     dest_dir = series.cache_dir / "sidecar"
     dest_dir.mkdir(parents=True, exist_ok=True)
-    for u in urls:
+    vtt_first = lambda u: 0 if re.search(r"webvtt|\.vtt(\?|$)", u, re.I) else 1  # noqa: E731
+    for u in sorted(urls, key=vtt_first):  # WebVTT carries <v Speaker> voice tags; SRT does not
         ext = "json" if u.lower().split("?")[0].endswith(".json") else "vtt"
         dest = dest_dir / f"{episode['id']}.{ext}"
         try:

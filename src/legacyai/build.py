@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 
 from .catalog import fetch_info, in_scope
 from .config import Series, load_json, save_json, slugify
+from .dedupe import mark_duplicates
 from .providers import PROVIDERS, ProviderError
 from .render import build_paragraphs, read_frontmatter, render_markdown
 
@@ -94,15 +95,20 @@ def build_one(series: Series, episode: dict) -> dict:
 
 def build(series: Series, limit: int = 0, workers: int = 3, retry_failed: bool = False,
           since: str = "", only: Optional[List[str]] = None, force: bool = False,
-          log=print) -> Dict[str, dict]:
+          dedupe: bool = True, log=print) -> Dict[str, dict]:
     series.out_dir.mkdir(parents=True, exist_ok=True)
     catalog = load_json(series.catalog_path, {})
     manifest: Dict[str, dict] = load_json(series.manifest_path, {})
-    adopt_existing(series, manifest, log)
+    if adopt_existing(series, manifest, log):
+        save_json(series.manifest_path, manifest)
+    if dedupe and mark_duplicates(series, log=log):  # same episode from another source
+        manifest = load_json(series.manifest_path, {})
 
     todo = []
     for ep in in_scope(series, catalog):
         rec = manifest.get(ep["id"], {})
+        if rec.get("status") == "duplicate":
+            continue
         if rec.get("status") == "done" and not force:
             continue
         if rec.get("status") == "failed" and not (retry_failed or force):

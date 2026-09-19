@@ -62,7 +62,7 @@ def cmd_config(a):
 def cmd_discover(a):
     from .catalog import discover, in_scope
     s = Series.load(a.series)
-    cat = discover(s, workers=a.workers, max_entries=a.max_entries)
+    cat = discover(s, workers=a.workers, max_entries=a.max_entries, only_source=a.source or "")
     print(f"catalog: {len(cat)} episodes, {len(in_scope(s, cat))} in scope")
 
 
@@ -70,8 +70,13 @@ def cmd_build(a):
     from .build import build, write_index
     s = Series.load(a.series)
     build(s, limit=a.limit, workers=a.workers, retry_failed=a.retry_failed,
-          since=a.since or "", only=a.id or None, force=a.force)
+          since=a.since or "", only=a.id or None, force=a.force, dedupe=not a.no_dedupe)
     write_index(s)
+
+
+def cmd_dedupe(a):
+    from .dedupe import mark_duplicates
+    mark_duplicates(Series.load(a.series), days=a.days, dry_run=a.dry_run)
 
 
 def cmd_validate(a):
@@ -113,6 +118,8 @@ def cmd_status(a):
               f"  in-scope {st['in_scope']:>4}/{st['catalog']:<4}  {lo}..{hi}  {st['words']:,} words")
         for reason, n in st["failure_reasons"].items():
             print(f"{'':<28}   {n:>3} x {reason}")
+        if st["duplicates"]:
+            print(f"{'':<28}   {st['duplicates']} entries linked as duplicates of existing transcripts")
         if st["unprobed"]:
             print(f"{'':<28}   {st['unprobed']} catalog entries have no metadata yet (re-run discover)")
 
@@ -177,6 +184,7 @@ def make_parser() -> argparse.ArgumentParser:
     d = sub.add_parser("discover", help="enumerate sources and probe episode metadata")
     d.add_argument("series"); d.add_argument("--workers", type=int, default=3)
     d.add_argument("--max-entries", type=int, default=0, help="override series max_entries")
+    d.add_argument("--source", help="only list sources whose URL contains this text")
     d.set_defaults(fn=cmd_discover)
 
     b = sub.add_parser("build", help="fetch transcripts for pending episodes")
@@ -187,7 +195,13 @@ def make_parser() -> argparse.ArgumentParser:
     b.add_argument("--id", action="append", help="build only this episode id (repeatable)")
     b.add_argument("--retry-failed", action="store_true")
     b.add_argument("--force", action="store_true", help="rebuild even if already done (pair with --id)")
+    b.add_argument("--no-dedupe", action="store_true", help="skip cross-source duplicate linking")
     b.set_defaults(fn=cmd_build)
+
+    dd = sub.add_parser("dedupe", help="link episodes that arrive from two sources (runs automatically in build)")
+    dd.add_argument("series"); dd.add_argument("--days", type=int, default=3)
+    dd.add_argument("--dry-run", action="store_true", help="list matches without recording them")
+    dd.set_defaults(fn=cmd_dedupe)
 
     v = sub.add_parser("validate", help="sanity-check built transcripts")
     v.add_argument("series"); v.add_argument("--strict", action="store_true")
