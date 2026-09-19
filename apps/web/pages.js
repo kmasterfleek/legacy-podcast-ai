@@ -14,7 +14,9 @@ export async function discover(){
 let searchVersion=0;
 async function runSearch(){
  const version=++searchVersion;const start=performance.now();
- $('#results').innerHTML=loading('Searching the archive…');
+ const stages=['Searching every episode…','Reading the closest passages…','Choosing the moments that are really about this…'];
+ $('#results').innerHTML=loading(stages[0]);
+ const timers=[1300,3000].map((ms,i)=>setTimeout(()=>{const el=$('#results .loading');if(version===searchVersion&&el)el.lastChild.textContent=stages[i+1];},ms));
  try{
   const data=await api(`/search?q=${encodeURIComponent(state.query)}&source=${state.source}`);
   if(version!==searchVersion||state.route!=='discover')return;
@@ -26,7 +28,7 @@ async function runSearch(){
   document.querySelectorAll('[data-context]').forEach(b=>b.onclick=()=>openPassage(b.dataset.context));
   document.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>saveMoment(b.dataset.save,b));
   $('#save-search').onclick=async e=>{const done=busy(e.currentTarget,'Saving…');try{await api('/opportunities',{method:'POST',body:{title:state.query}});toast('Opportunity saved');}catch(error){toast(error.message,true);}finally{done();}};
- }catch(error){if(version===searchVersion&&$('#results'))$('#results').innerHTML=errorPanel(error);}
+ }catch(error){if(version===searchVersion&&$('#results'))$('#results').innerHTML=errorPanel(error);}finally{timers.forEach(clearTimeout);}
 }
 
 export async function opportunities(){
