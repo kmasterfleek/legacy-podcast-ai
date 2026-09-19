@@ -38,9 +38,11 @@ new storage volume and separately provisioned accounts for a pilot.
    boundaries. Speaker 1 is not assumed to be a particular person.
 3. **Save to clip desk**: title and caption are editable. The original passage and
    transcript hash are preserved as evidence across subsequent archive indexing.
-4. **Prepare the video**: upload the original episode file. Clips are cut from the
-   owner's own source video, not from a YouTube download; the browser no longer
-   offers a YouTube fetch. Select a source, save to preview it, adjust times, and confirm alignment.
+4. **Source video**: the hosted teaser has no upload or YouTube fetch. The clip
+   desk explains that the full Studio connects to the owner's own video library,
+   cuts clips automatically, and exports to social channels after review. Render
+   stays disabled until a clip has a connected source video. The upload and fetch
+   API routes remain for the connected build.
 5. **Render**: choose portrait, square, or landscape. FFmpeg creates an MP4 from
    the selected range with a center crop. Face tracking and burned-in subtitles
    are not part of this release. Edited clips require a new render and approval.
