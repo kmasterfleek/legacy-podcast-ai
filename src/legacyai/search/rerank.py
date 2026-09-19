@@ -8,9 +8,14 @@ import os
 
 # Pinned on purpose. The API key does not select a model; this string does.
 MODEL = "claude-haiku-4-5"
-POOL = 40
-PASSAGE_CHARS = 1200
+POOL = 30
+PASSAGE_CHARS = 800
 log = logging.getLogger("legacyai.search")
+if not log.handlers:
+    # Uvicorn leaves the root logger at WARNING; the model line must reach the host logs.
+    log.addHandler(logging.StreamHandler())
+    log.setLevel(logging.INFO)
+    log.propagate = False
 
 PLAN_SYSTEM = """You prepare keyword searches over transcripts of the podcast "{show}".
 Transcripts are spoken conversation, so people are usually named the way friends say
@@ -27,7 +32,7 @@ share a word with the request. Pick the passages that are genuinely about it, be
 Prefer a passage that stands alone as a story, opinion, or exchange a viewer would follow
 without more context. Leave out passing mentions, advertisements, and passages about a
 different person or subject. Returning few or none is correct when few or none fit.
-For each pick give a reason: one plain sentence, 18 words or fewer, saying what is
+For each pick give a reason: one plain sentence, 14 words or fewer, saying what is
 said in the passage. Do not praise it."""
 
 PLAN_SCHEMA = {"type": "object", "additionalProperties": False,
