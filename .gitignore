@@ -10,10 +10,8 @@ __pycache__/
 .env.*.local
 
 # Legacy Podcast AI runtime data (series.json is committed; the rest is derived)
-series/*/cache/
-series/*/catalog.json
-series/*/manifest.json
-series/*/transcripts/
+series/*/*
+!series/*/series.json
 transcripts/
 
 # Original prototype's scratch data

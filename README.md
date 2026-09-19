@@ -10,8 +10,9 @@ RSS feed, or a YouTube channel that posted a new interview an hour ago. One
 tool, one output format, one index.
 
 It was built on the [All The Smoke](https://www.youtube.com/channel/UC2ozVs4pg2K3uFLw6-0ayCQ)
-podcast, where it produced 126 full-episode transcripts (about 1.7 million
-words) spanning 2021 to 2026. Then it was pointed at the other end of the
+podcast, where it produced 471 full-episode transcripts (about 6.3 million
+words) covering the show from its first episode in 2019 to this week, drawing
+on YouTube captions and the show's own published podcast transcripts. Then it was pointed at the other end of the
 century: Mighty Mouse cartoons from 1945, with no captions anywhere, came out
 as lyric-accurate transcripts from the original soundtrack.
 
@@ -68,7 +69,20 @@ YouTube, and has a public-domain prequel on the Internet Archive is one
    throws away narration sung over a 1945 orchestra.
 
 Each transcript records which provider produced it, so you always know how
-much to trust the words.
+much to trust the words. When a published transcript carries WebVTT voice
+tags, speaker turns are kept: each change of speaker starts a new, labeled
+paragraph, and the frontmatter records `speaker_labels: true`.
+
+### One episode, many sources
+
+A show often lives in several places at once: a YouTube upload and a podcast
+feed entry for the same interview, sometimes under different titles. Build
+links these automatically before transcribing anything. Entries published
+within three days of an existing transcript whose titles share the episode
+number or distinctive words are recorded as duplicates and never rebuilt.
+`legacy dedupe SERIES --dry-run` shows the matches first. The matcher is
+deliberately conservative, because skipping a real episode is worse than an
+extra file.
 
 ## How it works
 
@@ -175,8 +189,9 @@ Transcripts land in `series/<slug>/transcripts/` with an `index.md`.
 | `legacy init NAME --url URL [...]` | Create a series folder and config |
 | `legacy add-source SERIES URL [...]` | Add more sources to an existing series |
 | `legacy config SERIES [options]` | Change filters, language, Whisper settings, throttling, cookies |
-| `legacy discover SERIES` | Enumerate sources and probe episode metadata |
+| `legacy discover SERIES [--source TEXT]` | Enumerate sources (or only matching ones) and probe episode metadata |
 | `legacy build SERIES [--limit N] [--workers N] [--since DATE] [--id ID] [--retry-failed] [--force]` | Fetch transcripts for pending episodes |
+| `legacy dedupe SERIES [--dry-run]` | Link the same episode arriving from two sources (runs automatically in build) |
 | `legacy validate SERIES [--strict]` | Sanity-check built transcripts |
 | `legacy run SERIES` | discover + build + index + validate |
 | `legacy import SERIES FILE [...]` | Add local audio or video files |

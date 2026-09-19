@@ -16,6 +16,7 @@
   "exclude": "unplugged|kg certified|ticket & the truth|open run|bully ball|headliners|truth lounge|what.s burnin|watch party|\\breplay\\b|black effect presents|naked with cari|art of ward|special look|trailer",
   "providers": [
     "captions",
+    "sidecar",
     "whisper"
   ],
   "whisper_model": "small",
