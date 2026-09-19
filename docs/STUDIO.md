@@ -29,7 +29,12 @@ new storage volume and separately provisioned accounts for a pilot.
    explicit name/topic aliases, advertisement filtering, and overlapping-result
    suppression. There are no fabricated confidence scores or semantic embeddings.
 2. **Read context**: inspect the exact source passage and adjacent text; preview
-   linked YouTube media or open the podcast source. Times are approximate paragraph
+   linked YouTube media or open the podcast source. YouTube previews load the selected
+   start/end range inline, with a **Preview selection** replay button. Editing clip
+   times updates the preview and **Watch from … on YouTube** link before saving.
+   The external YouTube link only sets the start; it does not enforce an end.
+   If embedding is disabled or unavailable, a thumbnail and the timestamped link
+   remain available. Times are approximate paragraph
    boundaries. Speaker 1 is not assumed to be a particular person.
 3. **Save to clip desk**: title and caption are editable. The original passage and
    transcript hash are preserved as evidence across subsequent archive indexing.
@@ -147,6 +152,17 @@ temporary storage, creates test accounts, verifies workspace isolation and CSRF,
 and renders a short synthetic video when FFmpeg is available. No test contacts
 YouTube, a live feed, or a publisher. The frontend uses native ES modules; syntax
 can be checked with `node --check apps/web/app.js` and the other modules.
+Run `node --test tests/test_youtube.mjs` with Node 22+ for player lifecycle,
+selection timing, replay, and error fallback checks. These checks use a fake
+YouTube API; live playback depends on the source video's embedding permissions.
+
+The player uses YouTube's IFrame API with `start`/`end` and an absolute end time.
+The server and iframe send an origin referrer (`strict-origin-when-cross-origin`)
+for YouTube client identification; suppressing it can produce player error 153.
+The CSP permits YouTube API scripts, the privacy-enhanced player, and thumbnails.
+Start positions may land near a keyframe, so embedded previews are not frame-exact.
+The player also pauses at the selected end if the viewer seeks within the video;
+closing the drawer stops playback. No video download is required for this preview.
 
 ## Next release priorities
 

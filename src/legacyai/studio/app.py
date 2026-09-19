@@ -48,11 +48,11 @@ def create_app():
             return JSONResponse({"detail":"Upload exceeds the server limit"},status_code=413)
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; script-src 'self'; style-src 'self'; "
-            "img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; "
+            "default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self'; "
+            "img-src 'self' data: https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; "
             "frame-src https://www.youtube-nocookie.com; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
         if request.url.path.startswith(("/api/","/delivery/")):
             response.headers["Cache-Control"] = "no-store"

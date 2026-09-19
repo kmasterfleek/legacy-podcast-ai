@@ -42,8 +42,8 @@ export function sourceTag(p){return `<span class="source-tag ${p.source_kind==='
 export function empty(title,description,action=''){return `<div class="empty">${icon('archive')}<h3>${esc(title)}</h3><p>${esc(description)}</p>${action}</div>`;}
 export function errorPanel(error){return `<div class="error-panel" role="alert">${esc(error.message||error)}</div>`;}
 export function loading(label='Loading…'){return `<div class="loading"><span class="spinner"></span>${esc(label)}</div>`;}
-export function showDialog(html){$('#detail-content').innerHTML=html;if(!$('#detail').open)$('#detail').showModal();$('#detail').scrollTop=0;}
-export function closeDialog(){$('#detail').close();$('#detail-content').innerHTML='';}
+export function showDialog(html){$('#detail').dispatchEvent(new Event('preview-dispose'));$('#detail-content').innerHTML=html;if(!$('#detail').open)$('#detail').showModal();$('#detail').scrollTop=0;}
+export function closeDialog(){$('#detail').dispatchEvent(new Event('preview-dispose'));$('#detail').close();$('#detail-content').innerHTML='';}
 export const dialogHeader=(eyebrow,title)=>`<div class="drawer-top"><div><span class="eyebrow">${esc(eyebrow)}</span><h2 id="detail-title">${esc(title)}</h2></div><button class="icon-button" data-close aria-label="Close panel">${icon('close')}</button></div>`;
 export function highlight(text,terms=[]){
  if(!terms.length)return esc(text);

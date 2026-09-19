@@ -211,3 +211,21 @@ def test_production_cannot_enable_demo(monkeypatch):
     monkeypatch.setenv("LEGACY_DEMO","1")
     with pytest.raises(RuntimeError,match="Demo sign-in"):
         create_app()
+
+
+def test_youtube_preview_headers_and_updated_watch_link(studio):
+    client,*_=studio
+    response=client.get("/")
+    assert response.headers["Referrer-Policy"]=="strict-origin-when-cross-origin"
+    policy=response.headers["Content-Security-Policy"]
+    assert "script-src 'self' https://www.youtube.com https://s.ytimg.com;" in policy
+    assert "frame-src https://www.youtube-nocookie.com;" in policy
+    assert "https://i.ytimg.com" in policy
+    assert "frame-ancestors 'none'" in policy
+    assert client.get("/static/youtube.js").status_code==200
+    clip=make_clip(client)
+    response=client.patch(f"/api/clips/{clip['id']}",json={
+        "title":"Updated selection","caption":"", "start":35,"end":75,"revision":1})
+    assert response.status_code==200
+    assert response.json()["source_link"]=="https://www.youtube.com/watch?v=abcdefghijk&t=35s"
+    assert client.get(f"/api/clips/{clip['id']}").json()["source_link"].endswith("t=35s")
