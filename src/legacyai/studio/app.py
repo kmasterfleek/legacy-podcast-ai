@@ -68,7 +68,10 @@ def create_app():
 
     @app.get("/api/bootstrap")
     def bootstrap():
-        return {"demo":demo,"product":"Legacy Studio"}
+        # A single-workspace instance may brand its sign-in page; shared hosts reveal nothing.
+        with connect() as con:
+            names = [row[0] for row in con.execute("SELECT name FROM workspaces LIMIT 2")]
+        return {"demo":demo,"product":"Legacy Studio","workspace":names[0] if len(names)==1 else None}
 
     @app.post("/api/login")
     def login(data: Credentials, request: Request, response: Response):
