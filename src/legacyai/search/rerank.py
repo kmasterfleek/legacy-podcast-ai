@@ -52,7 +52,10 @@ def enabled():
 
 def ask(system, content, schema, max_tokens):
     import anthropic
-    client = anthropic.Anthropic(timeout=25.0, max_retries=1)
+    # Organization-level keys are not tied to a workspace and must name one per request.
+    workspace = os.environ.get("ANTHROPIC_WORKSPACE_ID", "").strip()
+    client = anthropic.Anthropic(timeout=25.0, max_retries=1,
+                                 default_headers={"anthropic-workspace-id": workspace} if workspace else None)
     try:
         response = client.messages.create(
             model=MODEL, max_tokens=max_tokens, system=system,
